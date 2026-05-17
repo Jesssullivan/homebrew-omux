@@ -5,29 +5,84 @@ class OauthMux < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.6/oauth-mux-aarch64-macos.tar.gz"
-      sha256 "fad35fc566fc53c98d9b6ad47db1987d5143a812efd7630eead7b435a665ba8b"
+      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.7/oauth-mux-aarch64-macos.tar.gz"
+      sha256 "82efcb8271beb6125bbc2190d20fbb869602a7bf664d8ee3036ae1e0d475999a"
     else
-      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.6/oauth-mux-x86_64-macos.tar.gz"
-      sha256 "1d1df4c7014a80f180741e6331069bfe2062edb26764eb3cb34f21096de31042"
+      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.7/oauth-mux-x86_64-macos.tar.gz"
+      sha256 "bec0b7ef541ef2f5fc2afa26cefd0aca3f902fad38c39d8790071f4ae46f8918"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.6/oauth-mux-aarch64-linux.tar.gz"
-      sha256 "390691cf9c01a0435ba90e814bddabdf0d246a8190b56be1208fe63c43e4f96f"
+      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.7/oauth-mux-aarch64-linux.tar.gz"
+      sha256 "fe59b9177d0ba52b6776c46c4ea27eff2982635acb527525bf5e3267676bd91f"
     else
-      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.6/oauth-mux-x86_64-linux.tar.gz"
-      sha256 "326027666fc1476e057ab0bb5b3ba100a2ac2b00128e8a40c22b87c685687e8b"
+      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.7/oauth-mux-x86_64-linux.tar.gz"
+      sha256 "7d01d87cbc6f75c050bedc439690909a77b4dbf606ce6609d5cd4c226a6ac1e5"
     end
   end
 
   def install
     bin.install "oauth-mux"
+    (bin/"codex").write <<~EOS
+      #!/bin/sh
+      # OMUX_CODEX_SHIM
+      set -eu
+
+      oauth_mux_bin="#{bin}/oauth-mux"
+
+      real_path() {
+          if command -v realpath >/dev/null 2>&1; then
+              realpath "$1"
+          else
+              dir=$(dirname "$1")
+              base=$(basename "$1")
+              printf '%s/%s\\n' "$(cd "$dir" 2>/dev/null && pwd -P)" "$base"
+          fi
+      }
+
+      is_omux_codex_shim() {
+          grep -q 'OMUX_CODEX_SHIM' "$1" 2>/dev/null
+      }
+
+      find_native_codex() {
+          self=$(real_path "$0")
+          old_ifs=$IFS
+          IFS=:
+          for dir in $PATH; do
+              [ -n "$dir" ] || continue
+              candidate="$dir/codex"
+              [ -x "$candidate" ] || continue
+              candidate_real=$(real_path "$candidate")
+              [ "$candidate_real" != "$self" ] || continue
+              if is_omux_codex_shim "$candidate"; then
+                  continue
+              fi
+              IFS=$old_ifs
+              printf '%s\\n' "$candidate"
+              return 0
+          done
+          IFS=$old_ifs
+          return 1
+      }
+
+      native_codex="${OMUX_CODEX_BIN:-}"
+      if [ -z "$native_codex" ]; then
+          native_codex=$(find_native_codex || true)
+      fi
+      if [ -z "$native_codex" ]; then
+          echo "codex: native Codex CLI not found; set OMUX_CODEX_BIN to the upstream Codex executable" >&2
+          exit 127
+      fi
+
+      OMUX_CODEX_BIN="$native_codex" OMUX_CODEX_SHIM=1 OMUX_COMMAND_SPELLING=codex exec "$oauth_mux_bin" codex "$@"
+    EOS
+    chmod 0755, bin/"codex"
   end
 
   test do
     assert_match "oauth-mux", shell_output("#{bin}/oauth-mux version")
+    assert_match "OMUX_CODEX_SHIM", shell_output("grep OMUX_CODEX_SHIM #{bin}/codex")
   end
 end
