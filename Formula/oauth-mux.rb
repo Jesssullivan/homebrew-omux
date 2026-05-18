@@ -1,88 +1,46 @@
 class OauthMux < Formula
   desc "OAuth fallback muxing for AI harness subscriptions"
   homepage "https://omux.xoxd.ai"
+  version "0.1.9"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.7/oauth-mux-aarch64-macos.tar.gz"
-      sha256 "82efcb8271beb6125bbc2190d20fbb869602a7bf664d8ee3036ae1e0d475999a"
+      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.9/oauth-mux-aarch64-macos.tar.gz"
+      sha256 "e38f4b7d442ef5f9b2e285705fc464f8294aaf690785aba73887e14e2ebdf7b0"
     else
-      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.7/oauth-mux-x86_64-macos.tar.gz"
-      sha256 "bec0b7ef541ef2f5fc2afa26cefd0aca3f902fad38c39d8790071f4ae46f8918"
+      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.9/oauth-mux-x86_64-macos.tar.gz"
+      sha256 "9e6ff399d5653ffd9f2c078b63b1f9ae0e39d0379aec6c9928c5a46a4709cc98"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.7/oauth-mux-aarch64-linux.tar.gz"
-      sha256 "fe59b9177d0ba52b6776c46c4ea27eff2982635acb527525bf5e3267676bd91f"
+      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.9/oauth-mux-aarch64-linux.tar.gz"
+      sha256 "f970a49de7f3022b70c9e0a6d77e5e99001dc9768b720688d3b1f5cdb6da121b"
     else
-      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.7/oauth-mux-x86_64-linux.tar.gz"
-      sha256 "7d01d87cbc6f75c050bedc439690909a77b4dbf606ce6609d5cd4c226a6ac1e5"
+      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.9/oauth-mux-x86_64-linux.tar.gz"
+      sha256 "b8b9dcb2bf5b12e8787159b708e00116d62cb6a9c41e520502b4e37c33395bbe"
     end
   end
 
   def install
     bin.install "oauth-mux"
-    (bin/"codex").write <<~EOS
-      #!/bin/sh
-      # OMUX_CODEX_SHIM
-      set -eu
-
-      oauth_mux_bin="#{bin}/oauth-mux"
-
-      real_path() {
-          if command -v realpath >/dev/null 2>&1; then
-              realpath "$1"
-          else
-              dir=$(dirname "$1")
-              base=$(basename "$1")
-              printf '%s/%s\\n' "$(cd "$dir" 2>/dev/null && pwd -P)" "$base"
-          fi
-      }
-
-      is_omux_codex_shim() {
-          grep -q 'OMUX_CODEX_SHIM' "$1" 2>/dev/null
-      }
-
-      find_native_codex() {
-          self=$(real_path "$0")
-          old_ifs=$IFS
-          IFS=:
-          for dir in $PATH; do
-              [ -n "$dir" ] || continue
-              candidate="$dir/codex"
-              [ -x "$candidate" ] || continue
-              candidate_real=$(real_path "$candidate")
-              [ "$candidate_real" != "$self" ] || continue
-              if is_omux_codex_shim "$candidate"; then
-                  continue
-              fi
-              IFS=$old_ifs
-              printf '%s\\n' "$candidate"
-              return 0
-          done
-          IFS=$old_ifs
-          return 1
-      }
-
-      native_codex="${OMUX_CODEX_BIN:-}"
-      if [ -z "$native_codex" ]; then
-          native_codex=$(find_native_codex || true)
-      fi
-      if [ -z "$native_codex" ]; then
-          echo "codex: native Codex CLI not found; set OMUX_CODEX_BIN to the upstream Codex executable" >&2
-          exit 127
-      fi
-
-      OMUX_CODEX_BIN="$native_codex" OMUX_CODEX_SHIM=1 OMUX_COMMAND_SPELLING=codex exec "$oauth_mux_bin" codex "$@"
-    EOS
-    chmod 0755, bin/"codex"
+    bin.install "codex"
   end
 
   test do
     assert_match "oauth-mux", shell_output("#{bin}/oauth-mux version")
     assert_match "OMUX_CODEX_SHIM", shell_output("grep OMUX_CODEX_SHIM #{bin}/codex")
+    native = testpath/"native-codex"
+    native.write <<~EOS
+      #!/bin/sh
+      case "$1" in
+        --version) echo "native-codex-stub 0.0.0" ;;
+        *) echo "native-codex-stub" ;;
+      esac
+    EOS
+    chmod 0755, native
+    assert_match "native-codex-stub 0.0.0", shell_output("OMUX_CODEX_BIN=#{native} #{bin}/codex --version")
   end
 end
