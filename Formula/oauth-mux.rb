@@ -5,21 +5,21 @@ class OauthMux < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.9/oauth-mux-aarch64-macos.tar.gz"
-      sha256 "e38f4b7d442ef5f9b2e285705fc464f8294aaf690785aba73887e14e2ebdf7b0"
+      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.10/oauth-mux-aarch64-macos.tar.gz"
+      sha256 "8a1e3516fabaec9a3b518f38db77ad4240c30f7809ca98ed1052e0e8824fdc7d"
     else
-      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.9/oauth-mux-x86_64-macos.tar.gz"
-      sha256 "9e6ff399d5653ffd9f2c078b63b1f9ae0e39d0379aec6c9928c5a46a4709cc98"
+      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.10/oauth-mux-x86_64-macos.tar.gz"
+      sha256 "465a285434b2429fcc57d627522b13e6d1c425b1869f87c4c999739f3e346bbf"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.9/oauth-mux-aarch64-linux.tar.gz"
-      sha256 "f970a49de7f3022b70c9e0a6d77e5e99001dc9768b720688d3b1f5cdb6da121b"
+      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.10/oauth-mux-aarch64-linux.tar.gz"
+      sha256 "ab29c88c61e3e2da1eb4624d0403facab6a311104326b79d17f4053af8cb3e6e"
     else
-      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.9/oauth-mux-x86_64-linux.tar.gz"
-      sha256 "b8b9dcb2bf5b12e8787159b708e00116d62cb6a9c41e520502b4e37c33395bbe"
+      url "https://github.com/Jesssullivan/oauth-mux/releases/download/v0.1.10/oauth-mux-x86_64-linux.tar.gz"
+      sha256 "b55635c10a034be307295b2b2f7d43501437efb0975662613866a61ccf54c800"
     end
   end
 
